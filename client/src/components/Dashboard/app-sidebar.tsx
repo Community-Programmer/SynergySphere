@@ -24,14 +24,8 @@ const data = {
           title: "Projects",
           url: "/projects",
           icon: LayoutDashboard
-        }
-      ]
-    },
-    {
-      title: "myTask",
-      url: "/my-task",
-      items: [
-        {
+        },
+         {
           title: "myTask",
           url: "/my-task",
           icon: BarChart3Icon
