@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -19,6 +20,7 @@ model User {
   updatedAt        DateTime @updatedAt
 
   managedProjects  Project[]
+  assignedTasks    Task[] @relation("UserAssignedTasks")
 }
 
 
@@ -47,6 +49,23 @@ model Project {
   manager     User     @relation(fields: [managerId], references: [id])
   deadline    DateTime
   priority    String
+  image       String?
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tasks       Task[] @relation("ProjectTasks")
+}
+
+model Task {
+  id          String   @id @default(uuid())
+  name        String
+  assigneeId  String
+  assignee    User     @relation("UserAssignedTasks", fields: [assigneeId], references: [id])
+  projectId   String
+  project     Project  @relation("ProjectTasks", fields: [projectId], references: [id])
+  tags        String[]
+  deadline    DateTime
   image       String?
   description String?
   createdAt   DateTime @default(now())
