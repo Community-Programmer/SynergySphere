@@ -4,6 +4,9 @@ import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
 import globalErrorHandler from './middleware/globalErrorHandler';
+import authRoutes from './auth/authRoutes';
+import projectRoutes from './project/projectRoutes';
+import taskRoutes from './task/taskRoutes';
 
 
 config();
@@ -35,6 +38,9 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 
+app.use('/api/auth', authRoutes);
+app.use('/api/projects', projectRoutes);
+app.use('/api/tasks', taskRoutes);
 app.use(globalErrorHandler);
 
 
