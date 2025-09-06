@@ -1,1 +1,3 @@
 server/server.ts
+.vscode
+.env

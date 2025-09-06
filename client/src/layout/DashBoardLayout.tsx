@@ -19,8 +19,6 @@ import { AppSidebar } from '@/components/Dashboard/app-sidebar';
 
 const DashBoardLayout = () => {
   const location = useLocation();
-  
-  // Convert URL path into breadcrumb items
   const pathSegments = location.pathname.split("/").filter((segment) => segment);
 
   return (
@@ -34,7 +32,7 @@ const DashBoardLayout = () => {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/">Home</Link>
+                  <Link to="/">Dashboard</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               {pathSegments.length > 0 && <BreadcrumbSeparator />}
