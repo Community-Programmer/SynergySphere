@@ -1,3 +1,4 @@
+
 import { Router } from "express";
 import {
 	createProject,
@@ -5,12 +6,17 @@ import {
 	getProjectById,
 	updateProject,
 	deleteProject,
+	getProjectsForUser,
+	getProjectDetail,
 } from "./projectControllers";
 import { authenticate } from "../middleware/authMiddleware";
 
 const router = Router();
 
 router.use(authenticate);
+
+router.get("/user-projects", getProjectsForUser);
+router.get("/:id/detail", getProjectDetail);
 router.post("/", createProject);
 router.get("/", getProjects);
 router.get("/:id", getProjectById);

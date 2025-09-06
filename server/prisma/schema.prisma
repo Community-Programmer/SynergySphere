@@ -58,7 +58,7 @@ model Project {
   tasks       Task[] @relation("ProjectTasks")
   members     ProjectMember[]
   }
-  
+
   model ProjectMember {
     id         String   @id @default(uuid())
     userId     String
@@ -76,7 +76,9 @@ model Task {
   assignee    User     @relation("UserAssignedTasks", fields: [assigneeId], references: [id])
   projectId   String
   project     Project  @relation("ProjectTasks", fields: [projectId], references: [id])
+  tags        String[]
   dueDate     DateTime
+  image       String?
   status      String   @default("Pending")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
