@@ -9,15 +9,23 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from "../utils/authUtils";
+import {
+  signupSchema,
+  loginSchema,
+  emailVerificationSchema,
+  passwordResetRequestSchema,
+  passwordResetSchema,
+} from "../validation/authValidation";
 
 const prisma = new PrismaClient();
 
 const signup = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { firstname, lastname, email, password } = req.body;
-    if (!firstname || !lastname || !email || !password) {
-      return next(createHttpError(400, "All fields are required"));
+    const parseResult = signupSchema.safeParse(req.body);
+    if (!parseResult.success) {
+  return res.status(400).json({ errors: parseResult.error.issues });
     }
+    const { firstname, lastname, email, password } = parseResult.data;
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return next(createHttpError(409, "User already exists"));
@@ -44,10 +52,11 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
 
 const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return next(createHttpError(400, "Email and password are required"));
+    const parseResult = loginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+  return res.status(400).json({ errors: parseResult.error.issues });
     }
+    const { email, password } = parseResult.data;
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user || !user.password) {
       return next(createHttpError(401, "Invalid credentials"));
@@ -85,25 +94,22 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
 
 const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { token } = req.query;
-    if (!token || typeof token !== "string") {
-      return next(createHttpError(400, "Invalid token"));
+    const parseResult = emailVerificationSchema.safeParse(req.query);
+    if (!parseResult.success) {
+  return res.status(400).json({ errors: parseResult.error.issues });
     }
-
+    const { token } = parseResult.data;
     const verification = await prisma.emailVerificationToken.findUnique({
       where: { token },
     });
     if (!verification || verification.expireAt < new Date()) {
       return next(createHttpError(400, "Token is invalid or expired"));
     }
-
     await prisma.user.update({
       where: { id: verification.userId },
       data: { emailVerified: new Date() },
     });
-
     await prisma.emailVerificationToken.delete({ where: { token } });
-
     res.json({ message: "Email verified successfully" });
   } catch (err) {
     console.log(err);
@@ -117,17 +123,18 @@ const requestPasswordReset = async (
   next: NextFunction
 ) => {
   try {
-    const { email } = req.body;
-    if (!email) return next(createHttpError(400, "Email is required"));
+    const parseResult = passwordResetRequestSchema.safeParse(req.body);
+    if (!parseResult.success) {
+  return res.status(400).json({ errors: parseResult.error.issues });
+    }
+    const { email } = parseResult.data;
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) return next(createHttpError(404, "User not found"));
-
     const token = crypto.randomBytes(32).toString("hex");
     const expireAt = new Date(Date.now() + 1000 * 60 * 30);
     await prisma.passwordResetToken.create({
       data: { userId: user.id, token, expireAt },
     });
-
     await sendPasswordResetEmail(email, token);
     res.json({
       message: "Password reset email sent. Please check your inbox.",
@@ -144,13 +151,12 @@ const resetPassword = async (
   next: NextFunction
 ) => {
   try {
-    const { token, password } = req.body;
-    if (!token || !password)
-      return next(createHttpError(400, "Token and new password are required"));
-
-    const resetRecord = await prisma.passwordResetToken.findUnique({
-      where: { token },
-    });
+    const parseResult = passwordResetSchema.safeParse(req.body);
+    if (!parseResult.success) {
+  return res.status(400).json({ errors: parseResult.error.issues });
+    }
+    const { token, password } = parseResult.data;
+    const resetRecord = await prisma.passwordResetToken.findUnique({ where: { token } });
     if (
       !resetRecord ||
       resetRecord.expireAt < new Date() ||
@@ -158,17 +164,14 @@ const resetPassword = async (
     ) {
       return next(createHttpError(400, "Token is invalid or expired"));
     }
-
     await prisma.user.update({
       where: { id: resetRecord.userId },
       data: { password: await hashPassword(password) },
     });
-
     await prisma.passwordResetToken.update({
       where: { token },
       data: { isUsed: true },
     });
-
     res.json({ message: "Password has been reset successfully." });
   } catch (err) {
     console.log(err);
