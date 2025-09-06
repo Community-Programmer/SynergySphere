@@ -4,7 +4,11 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { signToken } from "../utils/jwt";
-import { hashPassword, sendVerificationEmail } from "../utils/authUtils";
+import {
+  hashPassword,
+  sendVerificationEmail,
+  sendPasswordResetEmail,
+} from "../utils/authUtils";
 
 const prisma = new PrismaClient();
 
@@ -28,7 +32,10 @@ const signup = async (req: Request, res: Response, next: NextFunction) => {
       data: { userId: user.id, token, expireAt },
     });
     await sendVerificationEmail(email, token);
-    res.status(201).json({ message: "User registered successfully. Please check your email to verify your account." });
+    res.status(201).json({
+      message:
+        "User registered successfully. Please check your email to verify your account.",
+    });
   } catch (err) {
     console.log(err);
     return next(createHttpError(500, "Error while processing your request"));
@@ -50,7 +57,9 @@ const login = async (req: Request, res: Response, next: NextFunction) => {
       return next(createHttpError(401, "Invalid credentials"));
     }
     if (!user.emailVerified) {
-      return next(createHttpError(403, "Please verify your email before logging in"));
+      return next(
+        createHttpError(403, "Please verify your email before logging in")
+      );
     }
     // Generate JWT
     const token = signToken({ userId: user.id });
@@ -102,4 +111,69 @@ const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
   }
 };
 
-export { signup, login, verifyEmail };
+const requestPasswordReset = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { email } = req.body;
+    if (!email) return next(createHttpError(400, "Email is required"));
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) return next(createHttpError(404, "User not found"));
+
+    const token = crypto.randomBytes(32).toString("hex");
+    const expireAt = new Date(Date.now() + 1000 * 60 * 30);
+    await prisma.passwordResetToken.create({
+      data: { userId: user.id, token, expireAt },
+    });
+
+    await sendPasswordResetEmail(email, token);
+    res.json({
+      message: "Password reset email sent. Please check your inbox.",
+    });
+  } catch (err) {
+    console.log(err);
+    return next(createHttpError(500, "Error while processing your request"));
+  }
+};
+
+const resetPassword = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password)
+      return next(createHttpError(400, "Token and new password are required"));
+
+    const resetRecord = await prisma.passwordResetToken.findUnique({
+      where: { token },
+    });
+    if (
+      !resetRecord ||
+      resetRecord.expireAt < new Date() ||
+      resetRecord.isUsed
+    ) {
+      return next(createHttpError(400, "Token is invalid or expired"));
+    }
+
+    await prisma.user.update({
+      where: { id: resetRecord.userId },
+      data: { password: await hashPassword(password) },
+    });
+
+    await prisma.passwordResetToken.update({
+      where: { token },
+      data: { isUsed: true },
+    });
+
+    res.json({ message: "Password has been reset successfully." });
+  } catch (err) {
+    console.log(err);
+    return next(createHttpError(500, "Error while processing your request"));
+  }
+};
+
+export { signup, login, verifyEmail, requestPasswordReset, resetPassword };
