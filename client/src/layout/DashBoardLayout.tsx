@@ -34,7 +34,7 @@ const DashBoardLayout = () => {
             <BreadcrumbList>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  <Link to="/">Home</Link>
+                  <Link to="/">Dashboard</Link>
                 </BreadcrumbLink>
               </BreadcrumbItem>
               {pathSegments.length > 0 && <BreadcrumbSeparator />}

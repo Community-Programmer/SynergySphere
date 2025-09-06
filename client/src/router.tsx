@@ -4,6 +4,8 @@ import Login from "./pages/Auth/Login";
 import Signup from "./pages/Auth/Signup";
 import MainLayout from "./layout/MainLayout";
 import DashBoardLayout from "./layout/DashBoardLayout";
+import Projects from "./pages/Home/Projects";
+import NewProject from "./pages/Home/NewProject";
 
 export const router = createBrowserRouter([
   {
@@ -17,8 +19,9 @@ export const router = createBrowserRouter([
   {
     element: <DashBoardLayout />,
     children: [
-      { path: "/projects", element: <div>Projects Page</div> },
-      { path: "/my-task", element: <div>My Task Page</div> },
+  { path: "/projects", element: <Projects /> },
+  { path: "/projects/new", element: <NewProject /> },
+  { path: "/my-task", element: <div>My Task Page</div> },
     ],
   },
 ]);
