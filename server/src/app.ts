@@ -3,6 +3,7 @@ import { config } from 'dotenv';
 import cors from 'cors';
 import http from 'http';
 import { Server } from 'socket.io';
+import globalErrorHandler from './middleware/globalErrorHandler';
 
 
 config();
@@ -33,6 +34,8 @@ app.get('/', (req: Request, res: Response) => {
   });
 });
 
+
+app.use(globalErrorHandler);
 
 
 export { server, io };
