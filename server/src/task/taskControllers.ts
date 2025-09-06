@@ -10,16 +10,15 @@ export const createTask = async (req: Request, res: Response, next: NextFunction
     if (!parseResult.success) {
       return res.status(400).json({ errors: parseResult.error.issues });
     }
-    const { title, assigneeId, projectId, tags, dueDate, image, status, description } = parseResult.data;
+    const { name, assigneeId, projectId, tags, deadline, image, description } = parseResult.data;
     const task = await prisma.task.create({
       data: {
-        title,
+        title: name,
         assigneeId,
         projectId,
         tags,
-        dueDate: new Date(dueDate),
+        dueDate: new Date(deadline),
         image,
-        status,
         description,
       },
     });
@@ -61,17 +60,16 @@ export const updateTask = async (req: Request, res: Response, next: NextFunction
     if (!parseResult.success) {
       return res.status(400).json({ errors: parseResult.error.issues });
     }
-    const { title, assigneeId, projectId, tags, dueDate, image, status, description } = parseResult.data;
+    const { name, assigneeId, projectId, tags, deadline, image, description } = parseResult.data;
     const task = await prisma.task.update({
       where: { id },
       data: {
-        title,
+        title: name,
         assigneeId,
         projectId,
         tags,
-        dueDate: dueDate ? new Date(dueDate) : undefined,
+        dueDate: deadline ? new Date(deadline) : undefined,
         image,
-        status,
         description,
       },
     });
