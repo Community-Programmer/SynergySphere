@@ -6,9 +6,11 @@ import {
 	updateProject,
 	deleteProject,
 } from "./projectControllers";
+import { authenticate } from "../middleware/authMiddleware";
 
 const router = Router();
 
+router.use(authenticate);
 router.post("/", createProject);
 router.get("/", getProjects);
 router.get("/:id", getProjectById);
